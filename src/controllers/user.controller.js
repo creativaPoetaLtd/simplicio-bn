@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import User from "../database/models/user.js";
-import { sendEmail } from "../utils/sendEmail.js";
+import { sendEmail, sendWelcomeEmail } from "../utils/sendEmail.js";
 
 dotenv.config();
 
@@ -24,15 +24,13 @@ export const signUp = async (req, res) => {
       password: hashPassword,
       role: role || "normal", // Default to 'normal' if role is not provided
     });
-
-    // Save the user to the database
     await newUser.save();
-
-    // Respond with a success message
+    await sendWelcomeEmail(email, name)
     res
       .status(201)
       .json({ message: "User created successfully", user: newUser });
   } catch (error) {
+    console.error("Error", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
