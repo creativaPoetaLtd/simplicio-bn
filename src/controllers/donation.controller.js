@@ -10,21 +10,29 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const donate = async (req, res) => {
     const { churchId, amount, charityAction, name } = req.body;
+
+    // Validate input data
+    if (!churchId || !amount || amount <= 0) {
+        return res.status(400).json({ message: "Invalid donation data" });
+    }
+
     try {
+        // Find the church by ID
         const church = await Church.findById(churchId);
         if (!church) {
             return res.status(404).json({ message: "Church not found" });
         }
 
+        // Create a Stripe Checkout session
         const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['bancontact'],
+            payment_method_types: ['bancontact'], // Include both methods
             line_items: [{
                 price_data: {
                     currency: 'eur',
                     product_data: {
                         name: `Donation to ${church.name}`,
                     },
-                    unit_amount: amount * 100,
+                    unit_amount: amount * 100, // Stripe expects the amount in cents
                 },
                 quantity: 1,
             }],
@@ -37,7 +45,6 @@ export const donate = async (req, res) => {
             cancel_url: `${process.env.FRONTEND_URL}/failed`
         });
 
-
         // Save the donation details to the database
         const donation = new Donation({
             churchId,
@@ -46,8 +53,8 @@ export const donate = async (req, res) => {
             amount,
             charityAction,
             transactionId: session.id,
-            status: 'pending',
-            name: name || 'Anonyme',
+            status: 'pending', // Set initial status to 'pending'
+            name: name || 'Anonymous',
         });
 
         await donation.save();
@@ -57,10 +64,11 @@ export const donate = async (req, res) => {
             donationId: donation._id,
         });
     } catch (error) {
-        console.error(error);
+        console.error("Error processing donation:", error);
         res.status(500).json({ message: "Server error" });
     }
 };
+
 
 
 export const checkPaymentStatus = async (req, res) => {

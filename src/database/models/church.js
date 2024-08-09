@@ -10,20 +10,20 @@ const churchSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  churchEmail:{
-    type:String,
+  churchEmail: {
+    type: String,
   },
-  churchTel:{
-    type:String,
+  churchTel: {
+    type: String,
   },
-  churchLocation:{
-    type:String,
+  churchLocation: {
+    type: String,
   },
-  churchLocation:{
-    type:String,
+  churchLocation: {
+    type: String,
   },
-  churchAbout:{
-    type:String
+  churchAbout: {
+    type: String
   },
   iban: {
     type: String,
@@ -44,6 +44,9 @@ const churchSchema = new mongoose.Schema({
   qrCodeData: {
     type: String,
   },
+  stripeAccountId: {
+    type: String
+  }
 });
 
 const Church = mongoose.model("Church", churchSchema);

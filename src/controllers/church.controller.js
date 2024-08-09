@@ -3,7 +3,8 @@ import generateQRCode from "../utils/generateQRCode.js";
 import User from "../database/models/user.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import cloudinary from "cloudinary";
+import Stripe from 'stripe';
+
 import { v2 as cloudinaryV2 } from "cloudinary";
 
 dotenv.config();
@@ -13,6 +14,8 @@ cloudinaryV2.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+
 export const addChurch = async (req, res) => {
   try {
     const {
@@ -49,6 +52,26 @@ export const addChurch = async (req, res) => {
         error: "Privilege goes to admin or manager",
       });
     }
+    const stripeAccount = await stripe.accounts.create({
+      type: 'custom',
+      country: 'BE', // Belgium's country code
+      email: churchEmail,
+      business_type: 'non_profit',
+      company: {
+        name: name,
+      },
+      external_account: {
+        object: 'bank_account',
+        country: 'BE', // Belgium's country code
+        currency: 'eur', // Euro currency
+        account_number: iban,
+      },
+      capabilities: {
+        transfers: { requested: true },
+        card_payments: { requested: true },
+      },
+    });
+
 
     // Create a new church instance
     const newChurch = new Church({
@@ -61,6 +84,7 @@ export const addChurch = async (req, res) => {
       iban,
       sloganMessage,
       charityActions,
+      stripeAccountId: stripeAccount.id,
     });
 
     // Check if a logo was provided
