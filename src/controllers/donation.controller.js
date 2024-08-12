@@ -9,7 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 
 export const donate = async (req, res) => {
-    const { churchId, amount, charityAction, name } = req.body;
+    const { churchId, amount, charityAction, name, email } = req.body;
 
     // Validate input data
     if (!churchId || !amount || amount <= 0) {
@@ -23,9 +23,45 @@ export const donate = async (req, res) => {
             return res.status(404).json({ message: "Church not found" });
         }
 
+        // Initialize customer variable
+        let customer;
+
+        if (email) {
+            // Check if customer with this email already exists
+            const existingCustomer = await stripe.customers.list({
+                email: email,
+                limit: 1
+            });
+
+            if (existingCustomer.data.length > 0) {
+                customer = existingCustomer.data[0];
+            } else {
+                customer = await stripe.customers.create({
+                    email: email, // Corrected email usage
+                    name: name || 'Anonymous Donor'
+                });
+            }
+        } else {
+            customer = await stripe.customers.create({
+                name: name || 'Anonymous Donor',
+            });
+        }
+
         // Create a Stripe Checkout session
         const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['bancontact', 'sepa_debit', 'bank_transfer'], // Include both methods
+            customer: customer.id,
+            payment_method_types: ['bancontact', 'sepa_debit', 'customer_balance'],
+            payment_method_options: {
+                customer_balance: {
+                    funding_type: 'bank_transfer',
+                    bank_transfer: {
+                        type: 'eu_bank_transfer',
+                        eu_bank_transfer: {
+                            country: 'BE'
+                        }
+                    }
+                }
+            },
             line_items: [{
                 price_data: {
                     currency: 'eur',
@@ -68,6 +104,7 @@ export const donate = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+
 
 
 
