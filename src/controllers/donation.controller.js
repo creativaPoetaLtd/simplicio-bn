@@ -25,7 +25,7 @@ export const donate = async (req, res) => {
 
         // Create a Stripe Checkout session
         const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['bancontact'], // Include both methods
+            payment_method_types: ['bancontact', 'sepa_debit'], // Include both methods
             line_items: [{
                 price_data: {
                     currency: 'eur',
