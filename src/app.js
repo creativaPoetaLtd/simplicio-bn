@@ -7,6 +7,7 @@ import AuthenticationRoute from "./routes/Authentication.js";
 import churchRoutes from "./routes/church.js";
 import userRoutes from "./routes/user.js";
 import donateRoutes from './routes/donation.js';
+import messageRoutes from './routes/message.js'
 import { handleStripeWebhook } from "./controllers/donation.controller.js";
 
 const app = express();
@@ -59,6 +60,7 @@ app.use("/church", churchRoutes);
 app.use('/donate', donateRoutes)
 app.use('/webhook', handleStripeWebhook)
 app.use("/user", userRoutes);
+app.use('/message', messageRoutes);
 app.get("/", (req, res) => {
   res.status(200).json({
     message: "Welcome to simplicio API",
