@@ -67,6 +67,8 @@ export const isAuthenticated = (req, res, next) => {
   try {
     const decodedToken = jwt.verify(token, process.env.TOKEN_SECRET);
     req.user = decodedToken; // Attach decoded token data to the request
+    console.log("decoded User", req.user);
+
     next();
   } catch (error) {
     res.status(401).json({
